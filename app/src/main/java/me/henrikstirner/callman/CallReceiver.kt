@@ -18,6 +18,7 @@ class CallReceiver : BroadcastReceiver() {
         Log.d("CallReceiver", "Phone state: $state")
 
         if (TelephonyManager.EXTRA_STATE_RINGING == state) {
+            /*
             Log.d("CallReceiver", "Incoming call detected. Attempting to answer...")
 
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -30,6 +31,9 @@ class CallReceiver : BroadcastReceiver() {
             audioManager.dispatchMediaKeyEvent(upEvent)
 
             Log.d("CallReceiver", "Sent headset hook key events.")
+            */
+            ForegroundService.instance?.tryAcceptCall()
+                ?: Log.w("CallReceiver", "Service not running or instance is null")
         }
     }
 }
