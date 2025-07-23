@@ -25,13 +25,14 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.ANSWER_PHONE_CALLS,
         Manifest.permission.READ_PHONE_STATE
     )
-    private val REQUEST_CODE = 123
+
+    private val requestCode = 123
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (!hasPermissions()) {
-            ActivityCompat.requestPermissions(this, permissions, REQUEST_CODE)
+            ActivityCompat.requestPermissions(this, permissions, this.requestCode)
         }
 
 

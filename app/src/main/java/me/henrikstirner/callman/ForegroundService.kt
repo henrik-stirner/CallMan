@@ -16,15 +16,15 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 
 class ForegroundService : Service() {
-    private val channelId = "call_answer_channel"
+    private val channelId = "call_manager"
 
     companion object {
         var instance: ForegroundService? = null
     }
 
     override fun onCreate() {
-        super.onCreate()
         instance = this
+        super.onCreate()
     }
 
     override fun onDestroy() {
@@ -32,11 +32,29 @@ class ForegroundService : Service() {
         super.onDestroy()
     }
 
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            channelId,
+            "Call Manager",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(channel)
+    }
+
+    private fun createNotification(): Notification {
+        return NotificationCompat.Builder(this, channelId)
+            .setContentTitle("Call Manager")
+            .setContentText("Waiting for incoming calls...")
+            .setSmallIcon(android.R.drawable.sym_call_incoming)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createNotificationChannel()
-        Log.d("CallAnswerService", "Calling startForeground")
         startForeground(1, createNotification())
-        Toast.makeText(this, "Foreground service started", Toast.LENGTH_SHORT).show()
+        Log.d("ForegroundService", "Foreground service started")
 
         return START_STICKY
     }
@@ -45,30 +63,11 @@ class ForegroundService : Service() {
         val telecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
-            Log.d("CallAnswerService", "Trying to accept call...")
+            Log.d("ForegroundService", "Accepting call...")
             telecomManager.acceptRingingCall()
         } else {
-            Log.w("CallAnswerService", "Permission ANSWER_PHONE_CALLS not granted")
+            Log.w("ForegroundService", "Cannot accept call, permission ANSWER_PHONE_CALLS not granted")
         }
-    }
-
-    private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("CallAnswer Service Running")
-            .setContentText("Waiting to answer calls...")
-            .setSmallIcon(android.R.drawable.sym_call_incoming)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .build()
-    }
-
-    private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            channelId,
-            "Call Answer Channel",
-            NotificationManager.IMPORTANCE_HIGH
-        )
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(channel)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
