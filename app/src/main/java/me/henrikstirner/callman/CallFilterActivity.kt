@@ -51,6 +51,7 @@ import androidx.compose.material3.ButtonGroupMenuState
 import androidx.compose.material3.ButtonGroupScope
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
@@ -117,8 +118,8 @@ class CallFilterActivity : ComponentActivity() {
 	@OptIn(ExperimentalMaterial3Api::class)
 	@Composable
 	fun TopBar(onBackButtonClick: () -> Unit) {
-		TopAppBar(
-			title = { Text("") },
+		CenterAlignedTopAppBar(
+			title = { Text("Call Filter") },
 			navigationIcon = {
 				IconButton(onClick = onBackButtonClick) {
 					Icon(

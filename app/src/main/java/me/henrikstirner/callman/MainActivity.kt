@@ -18,7 +18,11 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +36,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -97,7 +106,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    BigRoundStartStopButton { this@MainActivity.toggleForegroundService() }
+                    StartStopButton { this@MainActivity.toggleForegroundService() }
                 }
             }
         }
@@ -106,8 +115,8 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
 	@Composable
     fun TopBar(onSettingsButtonClick: () -> Unit) {
-        TopAppBar(
-            title = { Text("") },
+        CenterAlignedTopAppBar(
+            title = { Text("Call Manager") },
             actions = {
                 IconButton(onClick = onSettingsButtonClick) {
                     Icon(
@@ -119,8 +128,9 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    @Composable
-    fun BigRoundStartStopButton(onClick: () -> Unit) {
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+	@Composable
+    fun StartStopButton(onClick: () -> Unit) {
         var isActive by remember { mutableStateOf(false) }
 
         Button(
@@ -130,12 +140,37 @@ class MainActivity : ComponentActivity() {
             },
             shape = CircleShape,
             modifier = Modifier
-                .size(200.dp),
+                .size(196.dp),
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
                 imageVector = if (isActive) Icons.Rounded.Stop else Icons.Rounded.PlayArrow,
                 contentDescription = if (isActive) "Stop" else "Start"
+            )
+        }
+
+        var timeoutEnabled by remember { mutableStateOf(true) }
+        val thickStroke = Stroke(
+            width =
+                with(LocalDensity.current) { 16.dp.toPx() },
+            cap = StrokeCap.Round,
+        )
+
+        if (isActive && timeoutEnabled) {
+            /*
+            CircularWavyProgressIndicator(
+                modifier = Modifier.size(320.dp),
+                progress = { 0.8F },
+                wavelength = 128.dp,
+                stroke = thickStroke,
+                trackStroke = thickStroke,
+                trackColor = MaterialTheme.colorScheme.background
+            )
+            */
+            CircularProgressIndicator(
+                modifier = Modifier.size(256.dp),
+                progress = { 0.8F },
+                strokeWidth = 16.dp
             )
         }
     }
