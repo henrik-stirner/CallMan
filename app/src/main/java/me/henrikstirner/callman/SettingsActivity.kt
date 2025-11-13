@@ -220,7 +220,6 @@ class SettingsActivity : ComponentActivity() {
             ),
             onValueChange = { it ->
                 if (it.all { it.isDigit() }) {
-                    input = it
                     if (!it.isEmpty()) {
                         onInput(it.toInt())
                     }

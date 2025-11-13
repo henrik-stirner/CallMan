@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -44,6 +45,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import me.henrikstirner.callman.ui.theme.CallManTheme
 
 class MainActivity : ComponentActivity() {
@@ -65,7 +71,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CallManTheme() {
-                this.UI()
+                this.MainUI()
             }
         }
     }
@@ -86,14 +92,16 @@ class MainActivity : ComponentActivity() {
 
     @Preview(showBackground = true)
     @Composable
-    fun UIPreview() {
+    fun MainUIPreview() {
         CallManTheme(darkTheme = true) {
-            this.UI()
+            this.MainUI()
         }
     }
 
     @Composable
-    private fun UI() {
+    private fun MainUI(
+        viewModel: MainViewModel = viewModel()
+    ) {
         Scaffold(
             topBar = {
                 TopBar(onSettingsButtonClick = { this@MainActivity.startSettingsActivity() })
@@ -106,7 +114,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    StartStopButton { this@MainActivity.toggleForegroundService() }
+                    StartStopButton(viewModel) { this@MainActivity.toggleForegroundService() }
                 }
             }
         }
@@ -130,12 +138,15 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 	@Composable
-    fun StartStopButton(onClick: () -> Unit) {
-        var isActive by remember { mutableStateOf(false) }
+    fun StartStopButton(
+        viewModel: MainViewModel,
+        onClick: () -> Unit
+    ) {
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         Button(
             onClick = {
-                isActive = !isActive
+                viewModel.toggleActive()
                 onClick()
             },
             shape = CircleShape,
@@ -144,8 +155,8 @@ class MainActivity : ComponentActivity() {
             contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
-                imageVector = if (isActive) Icons.Rounded.Stop else Icons.Rounded.PlayArrow,
-                contentDescription = if (isActive) "Stop" else "Start"
+                imageVector = if (uiState.isActive) Icons.Rounded.Stop else Icons.Rounded.PlayArrow,
+                contentDescription = if (uiState.isActive) "Stop" else "Start"
             )
         }
 
@@ -156,7 +167,7 @@ class MainActivity : ComponentActivity() {
             cap = StrokeCap.Round,
         )
 
-        if (isActive && timeoutEnabled) {
+        if (uiState.isActive && timeoutEnabled) {
             /*
             CircularWavyProgressIndicator(
                 modifier = Modifier.size(320.dp),
