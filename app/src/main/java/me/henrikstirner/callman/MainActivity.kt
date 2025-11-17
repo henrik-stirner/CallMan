@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CallManTheme() {
-                this.MainUI()
+                this.UI()
             }
         }
     }
@@ -92,14 +92,14 @@ class MainActivity : ComponentActivity() {
 
     @Preview(showBackground = true)
     @Composable
-    fun MainUIPreview() {
+    fun UIPreview() {
         CallManTheme(darkTheme = true) {
-            this.MainUI()
+            this.UI()
         }
     }
 
     @Composable
-    private fun MainUI(
+    private fun UI(
         viewModel: MainViewModel = viewModel()
     ) {
         Scaffold(

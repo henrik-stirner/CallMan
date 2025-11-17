@@ -30,7 +30,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,7 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.Flow
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import me.henrikstirner.callman.ui.theme.CallManTheme
 
@@ -110,43 +109,68 @@ class SettingsActivity : ComponentActivity() {
     fun Settings() {
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
+        val preferencesDataStore = remember(context) { PreferencesDataStore(context) }
 
-        val delayEnabledFlow = remember { SettingsDataStore.getDelayEnabled(context) }
-        val delayEnabled by delayEnabledFlow.collectAsState(initial = false)
+        val delayEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.DELAY_ENABLED, false).collectAsState(initial = false)
+        val narrationEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.NARRATION_ENABLED, false).collectAsState(initial = false)
+        val timeoutEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.TIMEOUT_ENABLED, false).collectAsState(initial = false)
+        val headphonesConstraintEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.HEADPHONES_CONSTRAINT_ENABLED, false).collectAsState(initial = false)
+        val bluetoothConnectionConstraintEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.BLUETOOTH_CONNECTION_CONSTRAINT_ENABLED, false).collectAsState(initial = false)
+        val ignoreUnknownNumbers by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.IGNORE_UNKNOWN_NUMBERS, false).collectAsState(initial = false)
+        val filterCalls by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.FILTER_CALLS, false).collectAsState(initial = false)
+        val declineUnwantedCalls by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.DECLINE_UNWANTED_CALLS, false).collectAsState(initial = false)
+        val autostartEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.AUTOSTART_ENABLED, false).collectAsState(initial = false)
+
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-
-
             SettingTitle("General")
             // General
-            SettingSwitch("Wait before accepting calls", delayEnabled) { scope.launch { SettingsDataStore.setDelayEnable(context, it) } }
-            SettingNumberEntry("Delay") {  }
-            SettingSwitch("Narration", false) { }
-            SettingSwitch("Stop automatically", false) { }
-            SettingNumberEntry("Timeout") {  }
+            SettingSwitch("Wait before accepting calls", delayEnabled) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
+            SettingNumberEntry("Delay", ) {  }  // TODO
+            SettingSwitch("Narration", narrationEnabled) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
+            SettingSwitch("Stop automatically", timeoutEnabled) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
+            SettingNumberEntry("Timeout") {  }  // TODO
             // --------
             SettingSpacer()
 
             SettingTitle("Constraints")
             // Connectivity Constraints
-            SettingSwitch("Headphones connected", false) { }
-            SettingSwitch("Bluetooth headset connected", false) { }
-            SettingButton("Specify Device") {  }
+            SettingSwitch("Headphones connected", headphonesConstraintEnabled) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
+            SettingSwitch("Bluetooth headset connected", bluetoothConnectionConstraintEnabled) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
+            SettingButton("Specify Device") {  }  // TODO
             // Call-Specific Constraints
-            SettingSwitch("Ignore unknown numbers", false) { }
-            SettingSwitch("Filter calls", false) {  }
-            SettingButton("Configure Filter") { this@SettingsActivity.startCallFilterActivity() }
+            SettingSwitch("Ignore unknown numbers", ignoreUnknownNumbers) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
+            SettingSwitch("Filter calls", filterCalls) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
+            SettingButton("Configure Filter") { this@SettingsActivity.startCallFilterActivity() }  // TODO
             // --------
             SettingSpacer()
 
             SettingTitle("Miscellaneous")
             //Miscellaneous
-            SettingSwitch("Decline unwanted calls", false) { }
-            SettingSwitch("Launch on system startup", false) { }
+            SettingSwitch("Decline unwanted calls", declineUnwantedCalls) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
+            SettingSwitch("Launch on system startup", autostartEnabled) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+            }
             // --------
             SettingSpacer()
         }
