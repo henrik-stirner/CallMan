@@ -121,7 +121,6 @@ class SettingsActivity : ComponentActivity() {
         val declineUnwantedCalls by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.DECLINE_UNWANTED_CALLS, false).collectAsState(initial = false)
         val autostartEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.AUTOSTART_ENABLED, false).collectAsState(initial = false)
 
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -134,10 +133,10 @@ class SettingsActivity : ComponentActivity() {
             }
             SettingNumberEntry("Delay", ) {  }  // TODO
             SettingSwitch("Narration", narrationEnabled) {
-                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.NARRATION_ENABLED, it) }
             }
             SettingSwitch("Stop automatically", timeoutEnabled) {
-                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.TIMEOUT_ENABLED, it) }
             }
             SettingNumberEntry("Timeout") {  }  // TODO
             // --------
@@ -146,18 +145,18 @@ class SettingsActivity : ComponentActivity() {
             SettingTitle("Constraints")
             // Connectivity Constraints
             SettingSwitch("Headphones connected", headphonesConstraintEnabled) {
-                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.HEADPHONES_CONSTRAINT_ENABLED, it) }
             }
             SettingSwitch("Bluetooth headset connected", bluetoothConnectionConstraintEnabled) {
-                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.BLUETOOTH_CONNECTION_CONSTRAINT_ENABLED, it) }
             }
             SettingButton("Specify Device") {  }  // TODO
             // Call-Specific Constraints
             SettingSwitch("Ignore unknown numbers", ignoreUnknownNumbers) {
-                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.IGNORE_UNKNOWN_NUMBERS, it) }
             }
             SettingSwitch("Filter calls", filterCalls) {
-                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.FILTER_CALLS, it) }
             }
             SettingButton("Configure Filter") { this@SettingsActivity.startCallFilterActivity() }  // TODO
             // --------
@@ -166,10 +165,10 @@ class SettingsActivity : ComponentActivity() {
             SettingTitle("Miscellaneous")
             //Miscellaneous
             SettingSwitch("Decline unwanted calls", declineUnwantedCalls) {
-                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DECLINE_UNWANTED_CALLS, it) }
             }
             SettingSwitch("Launch on system startup", autostartEnabled) {
-                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.AUTOSTART_ENABLED, it) }
             }
             // --------
             SettingSpacer()
@@ -193,12 +192,10 @@ class SettingsActivity : ComponentActivity() {
     }
 
     @Composable
-    fun SettingSwitch(label: String, initialState: Boolean, onClick: (it: Boolean) -> Unit) {
-        var isChecked by remember { mutableStateOf(initialState) }
-
+    fun SettingSwitch(label: String, isChecked: Boolean, onClick: (it: Boolean) -> Unit) {
         Row(
             modifier = Modifier
-                .clickable { isChecked = !isChecked }  // whole row clickable
+                .clickable { onClick(isChecked) }  // whole row clickable
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.Start,
@@ -207,7 +204,6 @@ class SettingsActivity : ComponentActivity() {
             Switch(
                 checked = isChecked,
                 onCheckedChange = {
-                    isChecked = it
                     onClick(it)
                 }
             )
