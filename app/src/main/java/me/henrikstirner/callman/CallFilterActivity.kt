@@ -109,7 +109,7 @@ class CallFilterActivity : ComponentActivity() {
 	@Composable
 	fun CallFilter() {
         var isWhiteList by remember { mutableStateOf(false) };
-        val callers = remember { mutableStateListOf(
+        val callers = remember { mutableStateListOf<Caller>(
             Caller(name = null, number = "+49 160 9863 1792"),
             Caller(name = null, number = "+49 160 9863 1792"),
             Caller(name = null, number = "+49 160 9863 1792")
@@ -121,7 +121,11 @@ class CallFilterActivity : ComponentActivity() {
 		) {
 			ListModeToggle { isWhiteList = it == 1 }
 			CallerList(isWhiteList, callers)
-			HCenteredRoundAddButton {  }
+			HCenteredRoundAddButton {
+                callers.add(
+                    Caller(name = null, number = "+49 160 9863 1792")
+                )
+            }
 		}
 	}
 
