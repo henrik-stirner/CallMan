@@ -1,7 +1,6 @@
 package me.henrikstirner.callman
 
 import android.os.Bundle
-import android.telecom.Call
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -19,53 +18,29 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Coffee
-import androidx.compose.material.icons.filled.DoNotDisturb
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Work
-import androidx.compose.material.icons.outlined.Clear
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Coffee
-import androidx.compose.material.icons.outlined.DoNotDisturb
-import androidx.compose.material.icons.outlined.Done
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Restaurant
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ButtonGroupMenuState
-import androidx.compose.material3.ButtonGroupScope
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -133,13 +108,20 @@ class CallFilterActivity : ComponentActivity() {
 
 	@Composable
 	fun CallFilter() {
+        var isWhiteList by remember { mutableStateOf(false) };
+        val callers = remember { mutableStateListOf(
+            Caller(name = null, number = "+49 160 9863 1792"),
+            Caller(name = null, number = "+49 160 9863 1792"),
+            Caller(name = null, number = "+49 160 9863 1792")
+        ) }
+
 		Column(
 			modifier = Modifier
 				.fillMaxSize()
 		) {
-			ListModeToggle { }
-			CallerList()
-			HCenteredRoundAddButton { }
+			ListModeToggle { isWhiteList = it == 1 }
+			CallerList(isWhiteList, callers)
+			HCenteredRoundAddButton {  }
 		}
 	}
 
@@ -192,39 +174,59 @@ class CallFilterActivity : ComponentActivity() {
 	}
 
 	@Composable
-	fun CallerList() {
+	fun CallerList(isWhiteList: Boolean, callers: MutableList<Caller>) {
 		Surface (
 			shape = RoundedCornerShape(32.dp),
-			color = Color.White,
-			// border = BorderStroke(4.dp, Color.White),
+			// color = if (isWhiteList) Color(0xFF1B5E20) else Color(0xFFB71C1C),
+			border = BorderStroke(
+                if (callers.isNotEmpty()) 4.dp else 0.dp,
+                if (isWhiteList) Color(0xFF1B5E20) else Color(0xFFB71C1C)
+            ).takeIf { callers.isNotEmpty() }
 		) {
 			Column(
 				modifier = Modifier
 					.padding(4.dp)
 					.fillMaxWidth()
-			) {
-				CallerListEntry("+49 160 9863 1792")
-				CallerListEntry("+49 160 9863 1792")
-				CallerListEntry("+49 160 9863 1792")
-				CallerListEntry("+49 160 9863 1792")
+			) {Column {
+                if (callers.isEmpty()) {
+                    Surface(
+                        modifier = Modifier.padding(4.dp),
+                        shape = CircleShape
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(modifier = Modifier.padding(8.dp), text = "Click \"+\" to add a caller")
+                        }
+                    }
+                } else {
+                    callers.forEach { caller ->
+                        CallerListEntry(
+                            label = caller.name?: caller.number,
+                            onDelete = { callers.remove(caller) }
+                        )
+                    }}
+                }
 			}
 		}
 	}
 
 	@Composable
-	fun CallerListEntry(label: String) {
+	fun CallerListEntry(label: String, onDelete: () -> Unit) {
 		Surface(
+            color = MaterialTheme.colorScheme.secondaryContainer,
 			modifier = Modifier.padding(4.dp),
 			shape = CircleShape
 		) {
 			Row(
-				modifier = Modifier
-					.fillMaxWidth(),
+				modifier = Modifier.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.SpaceBetween
 			) {
 				Text(modifier = Modifier.padding(horizontal = 16.dp), text = label)
-				IconButton(onClick = {  }) {
+				IconButton(onClick = { onDelete() }) {
 					Icon(imageVector = Icons.Rounded.Delete, contentDescription = "Delete")
 				}
 			}
