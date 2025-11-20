@@ -12,12 +12,11 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import android.telecom.TelecomManager
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 
 class ForegroundService : Service() {
-    private val channelId = "call_manager"
+    private val CHANNEL_ID = "call_manager"
 
     companion object {
         var instance: ForegroundService? = null
@@ -35,7 +34,7 @@ class ForegroundService : Service() {
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            channelId,
+            CHANNEL_ID,
             "Call Manager",
             NotificationManager.IMPORTANCE_HIGH
         )
@@ -44,11 +43,17 @@ class ForegroundService : Service() {
     }
 
     private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, channelId)
+        val intent = Intent(this, MainActivity::class.java).apply {
+            action = "TOGGLE_ACTIVE"
+        }
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Call Manager")
             .setContentText("Waiting for incoming calls...")
             .setSmallIcon(android.R.drawable.sym_call_incoming)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
             .build()
     }
 
