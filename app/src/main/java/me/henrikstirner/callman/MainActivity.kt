@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -63,6 +64,8 @@ class MainActivity : ComponentActivity() {
     }.toTypedArray()
     private val requestCode = 123  // ueberfluessige ID fuer mich!! :)
 
+    private val vm: MainViewModel by viewModels()
+
     private fun hasPermissions(): Boolean {
         return permissions.all {
             ActivityCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
@@ -74,6 +77,10 @@ class MainActivity : ComponentActivity() {
 
         if (!hasPermissions()) {
             ActivityCompat.requestPermissions(this, permissions, this.requestCode)
+        }
+
+        if (intent?.action == "TOGGLE_ACTIVE") {
+            this.toggleActive()
         }
 
         setContent {
@@ -95,6 +102,11 @@ class MainActivity : ComponentActivity() {
         } else {
             stopService(intent)
         }
+    }
+
+    fun toggleActive() {
+        this.toggleForegroundService()
+        this.vm.toggleActive()
     }
 
     @Preview(showBackground = true)
