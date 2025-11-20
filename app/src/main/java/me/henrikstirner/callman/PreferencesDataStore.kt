@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -14,8 +15,10 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 class PreferencesDataStore(private val context: Context) {
     companion object {
         val DELAY_ENABLED = booleanPreferencesKey("enable_delay")
+        val DELAY_MILLIS = longPreferencesKey("delay_millis")
         val NARRATION_ENABLED = booleanPreferencesKey("enable_narration")
         val TIMEOUT_ENABLED = booleanPreferencesKey("enable_timeout")
+        val TIMEOUT_MILLIS = longPreferencesKey("timeout_millis")
         val HEADPHONES_CONSTRAINT_ENABLED = booleanPreferencesKey("enable_headphones_constraint")
         val BLUETOOTH_CONNECTION_CONSTRAINT_ENABLED = booleanPreferencesKey("enable_bluetooth_connection_constraint")
         val IGNORE_UNKNOWN_NUMBERS = booleanPreferencesKey("ignore_unknown_numbers")

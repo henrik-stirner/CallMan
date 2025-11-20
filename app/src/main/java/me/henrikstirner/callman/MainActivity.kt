@@ -3,6 +3,7 @@ package me.henrikstirner.callman
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -53,8 +54,14 @@ import kotlinx.coroutines.launch
 import me.henrikstirner.callman.ui.theme.CallManTheme
 
 class MainActivity : ComponentActivity() {
-    private val permissions = arrayOf(Manifest.permission.ANSWER_PHONE_CALLS, Manifest.permission.READ_PHONE_STATE)
-    private val requestCode = 123
+    private val permissions = buildList {
+        add(Manifest.permission.ANSWER_PHONE_CALLS)
+        add(Manifest.permission.READ_PHONE_STATE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }.toTypedArray()
+    private val requestCode = 123  // ueberfluessige ID fuer mich!! :)
 
     private fun hasPermissions(): Boolean {
         return permissions.all {

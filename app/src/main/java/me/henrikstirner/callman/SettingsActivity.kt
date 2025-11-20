@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +46,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.henrikstirner.callman.ui.theme.CallManTheme
 
@@ -112,8 +117,10 @@ class SettingsActivity : ComponentActivity() {
         val preferencesDataStore = remember(context) { PreferencesDataStore(context) }
 
         val delayEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.DELAY_ENABLED, false).collectAsState(initial = false)
+        val delayMillis by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.DELAY_MILLIS, 3_000).collectAsState(initial = 3000)
         val narrationEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.NARRATION_ENABLED, false).collectAsState(initial = false)
         val timeoutEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.TIMEOUT_ENABLED, false).collectAsState(initial = false)
+        val timeoutMillis by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.TIMEOUT_MILLIS, 3_600_000).collectAsState(initial = 3_600_000)
         val headphonesConstraintEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.HEADPHONES_CONSTRAINT_ENABLED, false).collectAsState(initial = false)
         val bluetoothConnectionConstraintEnabled by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.BLUETOOTH_CONNECTION_CONSTRAINT_ENABLED, false).collectAsState(initial = false)
         val ignoreUnknownNumbers by preferencesDataStore.getPreferenceFlow(PreferencesDataStore.IGNORE_UNKNOWN_NUMBERS, false).collectAsState(initial = false)
@@ -131,14 +138,17 @@ class SettingsActivity : ComponentActivity() {
             SettingSwitch("Wait before accepting calls", delayEnabled) {
                 scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_ENABLED, it) }
             }
-            SettingNumberEntry("Delay", ) {  }  // TODO
+            SettingNumberEntry("Delay", delayMillis) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.DELAY_MILLIS, it) }  // TODO
+            }  // TODO
             SettingSwitch("Narration", narrationEnabled) {
                 scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.NARRATION_ENABLED, it) }
             }
             SettingSwitch("Stop automatically", timeoutEnabled) {
                 scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.TIMEOUT_ENABLED, it) }
             }
-            SettingNumberEntry("Timeout") {  }  // TODO
+            SettingNumberEntry("Timeout", timeoutMillis) {
+                scope.launch { preferencesDataStore.setPreference(PreferencesDataStore.TIMEOUT_MILLIS, it) } }  // TODO
             // --------
             SettingSpacer()
 
@@ -224,27 +234,89 @@ class SettingsActivity : ComponentActivity() {
         }
     }
 
+    private val fullTimeRegex = Regex("^\\s*(\\d+\\s*[dhms]\\s*)+\$")
+
+    fun String.isValidTimeFormat(): Boolean = fullTimeRegex.matches(this)
+
+    private val timeRegex = Regex("(\\d+)\\s*([dhms])")
+
+    fun String.toMillis(): Long {
+        var total = 0L
+        for ((value, unit) in timeRegex.findAll(this).map { it.groupValues[1].toLong() to it.groupValues[2] }) {
+            total += when (unit) {
+                "d" -> value * 86_400_000
+                "h" -> value * 3_600_000
+                "m" -> value * 60_000
+                "s" -> value * 1_000
+                else -> 0
+            }
+        }
+        return total
+    }
+
+    fun Long.toTimeString(): String {
+        var ms = this
+        val d = ms / 86_400_000; ms %= 86_400_000
+        val h = ms / 3_600_000;  ms %= 3_600_000
+        val m = ms / 60_000;     ms %= 60_000
+        val s = ms / 1_000
+
+        return buildList {
+            if (d > 0) add("${d}d")
+            if (h > 0) add("${h}h")
+            if (m > 0) add("${m}m")
+            if (s > 0 || isEmpty()) add("${s}s")
+        }.joinToString(" ")
+    }
+
     @Composable
-    fun SettingNumberEntry(label: String, onInput: (it: Int) -> Unit) {
-        var input by remember { mutableStateOf("") }
+    fun SettingNumberEntry(label: String, initialValue: Long, onInput: (it: Long) -> Unit) {
+        var value by remember { mutableStateOf(initialValue.toTimeString()) }
+
+        LaunchedEffect(initialValue) {
+            val formatted = initialValue.toTimeString()
+            if (value != formatted) value = formatted
+        }
+
+        val scope = rememberCoroutineScope()
+        var debounceJob by remember { mutableStateOf<Job?>(null) }
 
         OutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp),
-            value = input,
+            value = value,
             singleLine = true,
             label = { Text(label) },
             keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Text
             ),
-            onValueChange = { it ->
-                if (it.all { it.isDigit() }) {
-                    if (!it.isEmpty()) {
-                        onInput(it.toInt())
+            /*
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (value.isNotEmpty() && value.all(Char::isDigit)) {
+                        onInput(value.toLong())
                     }
                 }
-            }
+            ),
+            */
+            onValueChange = { it: String ->
+                value = it
+                debounceJob?.cancel()
+
+                if (it.isEmpty()) return@OutlinedTextField
+
+                debounceJob = scope.launch {
+                    delay(1000)
+
+                    if (it.isValidTimeFormat()) {
+                        onInput(it.toMillis())
+                    } else if (it.all(Char::isDigit)) {
+                        onInput(it.toLong() * 1000)
+                    }
+                }
+            },
+            isError = value.isNotEmpty() && !value.all(Char::isDigit) && !value.isValidTimeFormat()
         )
     }
 }
