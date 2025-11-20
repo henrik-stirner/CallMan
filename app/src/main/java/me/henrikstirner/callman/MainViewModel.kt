@@ -9,7 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 data class MainUiState(
-    val isActive: Boolean = false
+    val isActive: Boolean = false,
+    val progress: Double = 0.0
 )
 
 class MainViewModel : ViewModel() {
